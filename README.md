@@ -14,7 +14,7 @@ written in TypeScript on WebdriverIO, and runs on every push in GitHub Actions o
 | **Stack** | Appium 3 · UiAutomator2 driver · WebdriverIO 10 · Mocha · TypeScript |
 | **Pattern** | Page Object Model, with screens, reusable components and multi-screen flows |
 | **Reporting** | Allure, [published from every run on main](https://saadiiftikhar.github.io/appium-automation/). A failure saves a screenshot and the accessibility tree. |
-| **CI** | GitHub Actions on an API 34 emulator: the full suite on main and nightly, `@smoke` tests on pull requests |
+| **CI** | GitHub Actions, sharded across three API 34 emulators in parallel: the full suite on main and nightly, `@smoke` tests on pull requests, one merged Allure report |
 | **Coverage** | 11 spec files, 69 test cases. See the [test plan](docs/TEST_PLAN.md). |
 
 ## Why UiAutomator2 and not a Flutter driver?

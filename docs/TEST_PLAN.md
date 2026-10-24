@@ -47,7 +47,10 @@ persistence, the icon picker, the calendar, and the settings screen.
   pass only on retry. In CI, a spec file whose session dies (for example, the on-device
   UiAutomator2 server crashing) is re-run once in a fresh session.
 - **Failure evidence:** each failed test saves a screenshot and the accessibility tree XML to
-  `reports/failures/`. CI uploads both with the Allure report.
+  `reports/failures/`. CI uploads both, with the device logcat, for each shard.
+- **CI:** the suite is split across three emulators running in parallel, balanced by how long
+  each spec takes. A static check fails the build if a spec file is left out of every shard.
+  The shards' Allure results are merged into one report.
 
 ## Test cases
 

@@ -40,15 +40,33 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
+      # Shards list their specs by name, so a new spec file left out of every
+      # shard would never run in CI, and nothing would say so.
+      - name: Every spec file is in a CI shard
+        run: |
+          for f in test/specs/*.spec.ts; do
+            name=$(basename "$f" .spec.ts)
+            grep -qE "specs:.*\b${name}\b" .github/workflows/android-e2e.yml \
+              || { echo "::error file=$f::$f is not in any shard in android-e2e.yml"; exit 1; }
+          done
 
+  # The suite is split across three emulators that run at once. Each shard
+  # takes a third of the time, and a runner lost mid-run costs one shard,
+  # not the whole suite. Shards are balanced by how long each spec takes.
   e2e:
     needs: static-checks
     runs-on: ubuntu-latest
-    timeout-minutes: 90
-    outputs:
-      # Whether a report reached the Pages staging step. A run cut short
-      # (runner lost, cancelled) never gets there, and has nothing to publish.
-      report-staged: ${{ steps.stage-report.outcome == 'success' }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - shard: 1
+            specs: run-routine validation settings
+          - shard: 2
+            specs: reminder-actions create-routine
+          - shard: 3
+            specs: create-step run-step icon-picker onboarding calendar navigation
     steps:
       - uses: actions/checkout@v5
 
@@ -56,11 +74,6 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: 17
 
       - name: Enable KVM for the emulator
         run: |
@@ -77,6 +90,16 @@ jobs:
         env:
           CADENCE_ASSET: Cadence-x86_64.apk
 
+      - name: Choose spec files
+        id: specs
+        run: |
+          args=""
+          for name in ${{ matrix.specs }}; do args="$args --spec test/specs/$name.spec.ts"; done
+          if [ "${{ github.event_name }}" = "pull_request" ] || [ "${{ github.event.inputs.suite }}" = "smoke" ]; then
+            args="$args --mochaOpts.grep @smoke"
+          fi
+          echo "args=$args" >> "$GITHUB_OUTPUT"
+
       # A booted-and-saved AVD snapshot turns a cold boot of several minutes
       # into a quick restore on every later run.
       - name: Restore AVD snapshot
@@ -86,8 +109,11 @@ jobs:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-          key: avd-${{ env.API_LEVEL }}-google_apis-x86_64-pixel_6-4g-2c
+          key: avd-${{ env.API_LEVEL }}-google_apis-x86_64-pixel_6-4g-3c
 
+      # Three of the runner's four vCPUs. With two, the software-rendered
+      # emulator is slow enough that its launcher stops responding; with all
+      # four, it starves the runner agent and GitHub drops the job.
       - name: Create AVD snapshot
         if: steps.avd-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
@@ -98,9 +124,7 @@ jobs:
           profile: pixel_6
           force-avd-creation: false
           ram-size: 4096M
-          # Half the runner's 4 vCPUs. Given all four, the emulator starves the
-          # runner agent until GitHub loses contact and kills the job.
-          cores: 2
+          cores: 3
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: false
           script: echo "Snapshot saved."
@@ -114,39 +138,79 @@ jobs:
           profile: pixel_6
           force-avd-creation: false
           ram-size: 4096M
-          # Half the runner's 4 vCPUs. Given all four, the emulator starves the
-          # runner agent until GitHub loses contact and kills the job.
-          cores: 2
+          cores: 3
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          script: bash scripts/ci-test.sh ${{ (github.event_name == 'pull_request' || github.event.inputs.suite == 'smoke') && '--mochaOpts.grep @smoke' || '' }}
+          script: bash scripts/ci-test.sh ${{ steps.specs.outputs.args }}
 
-      - name: Build Allure report
-        if: always()
-        run: npx allure generate reports/allure-results --clean -o reports/allure-report
-
-      - name: Upload test artifacts
+      - name: Upload Allure results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: e2e-reports
+          name: allure-results-${{ matrix.shard }}
+          path: reports/allure-results
+          retention-days: 14
+
+      - name: Upload failure evidence and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidence-${{ matrix.shard }}
           path: |
-            reports/allure-report
             reports/failures
             reports/logs
           retention-days: 14
 
+  # One Allure report from all shards' results.
+  report:
+    needs: e2e
+    if: always() && needs.e2e.result != 'skipped' && needs.e2e.result != 'cancelled'
+    runs-on: ubuntu-latest
+    outputs:
+      staged: ${{ steps.stage.outcome == 'success' }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - run: npm ci
+
+      - name: Collect every shard's results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: allure-results-*
+          path: reports/allure-results
+          merge-multiple: true
+
+      - name: Build Allure report
+        run: npx allure generate reports/allure-results --clean -o reports/allure-report
+
+      - name: Upload Allure report
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report
+          path: reports/allure-report
+          retention-days: 14
+
       - name: Stage the report for GitHub Pages
-        id: stage-report
-        if: always() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        id: stage
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
         with:
           path: reports/allure-report
 
   # The latest report from main, browsable without downloading anything.
   publish-report:
-    needs: e2e
-    if: always() && needs.e2e.outputs.report-staged == 'true'
+    needs: report
+    if: always() && needs.report.outputs.staged == 'true'
     runs-on: ubuntu-latest
     permissions:
       pages: write
