@@ -74,7 +74,7 @@ jobs:
       # A booted-and-saved AVD snapshot turns a cold boot of several minutes
       # into a quick restore on every later run.
       - name: Restore AVD snapshot
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         id: avd-cache
         with:
           path: |
