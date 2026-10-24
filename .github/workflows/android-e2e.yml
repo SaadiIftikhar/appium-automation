@@ -45,6 +45,10 @@ jobs:
     needs: static-checks
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    outputs:
+      # Whether a report reached the Pages staging step. A run cut short
+      # (runner lost, cancelled) never gets there, and has nothing to publish.
+      report-staged: ${{ steps.stage-report.outcome == 'success' }}
     steps:
       - uses: actions/checkout@v5
 
@@ -94,7 +98,9 @@ jobs:
           profile: pixel_6
           force-avd-creation: false
           ram-size: 4096M
-          cores: 4
+          # Half the runner's 4 vCPUs. Given all four, the emulator starves the
+          # runner agent until GitHub loses contact and kills the job.
+          cores: 2
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: false
           script: echo "Snapshot saved."
@@ -108,7 +114,9 @@ jobs:
           profile: pixel_6
           force-avd-creation: false
           ram-size: 4096M
-          cores: 4
+          # Half the runner's 4 vCPUs. Given all four, the emulator starves the
+          # runner agent until GitHub loses contact and kills the job.
+          cores: 2
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: bash scripts/ci-test.sh ${{ (github.event_name == 'pull_request' || github.event.inputs.suite == 'smoke') && '--mochaOpts.grep @smoke' || '' }}
@@ -129,6 +137,7 @@ jobs:
           retention-days: 14
 
       - name: Stage the report for GitHub Pages
+        id: stage-report
         if: always() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
         with:
@@ -137,7 +146,7 @@ jobs:
   # The latest report from main, browsable without downloading anything.
   publish-report:
     needs: e2e
-    if: always() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && needs.e2e.result != 'skipped' && needs.e2e.result != 'cancelled'
+    if: always() && needs.e2e.outputs.report-staged == 'true'
     runs-on: ubuntu-latest
     permissions:
       pages: write
