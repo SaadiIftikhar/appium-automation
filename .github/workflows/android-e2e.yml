@@ -86,7 +86,7 @@ jobs:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-          key: avd-${{ env.API_LEVEL }}-google_apis-x86_64-pixel_6-4g
+          key: avd-${{ env.API_LEVEL }}-google_apis-x86_64-pixel_6-4g-2c
 
       - name: Create AVD snapshot
         if: steps.avd-cache.outputs.cache-hit != 'true'
