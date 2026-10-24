@@ -80,9 +80,22 @@ export const sharedConfig: Omit<Options.Testrunner, 'capabilities'> = {
      * the device reported, which is usually what a failure comes down to.
      */
     afterTest: async (test, _context, { passed }) => {
-        if (passed) return;
-        const base = path.join(FAILURES, test.title.replace(/[^a-z0-9]+/gi, '_').slice(0, 80));
-        await driver.saveScreenshot(`${base}.png`);
-        fs.writeFileSync(`${base}.xml`, await driver.getPageSource());
+        if (!passed) await saveFailureEvidence(test.title);
+    },
+
+    /** Same for a failed hook: a broken beforeEach fails every test after it. */
+    afterHook: async (test, _context, { passed }) => {
+        if (!passed) await saveFailureEvidence(`hook ${test.title}`);
     },
 };
+
+async function saveFailureEvidence(title: string): Promise<void> {
+    const base = path.join(FAILURES, title.replace(/[^a-z0-9]+/gi, '_').slice(0, 80));
+    try {
+        await driver.saveScreenshot(`${base}.png`);
+        fs.writeFileSync(`${base}.xml`, await driver.getPageSource());
+    } catch (error) {
+        // The session itself may be what broke; say so rather than mask the failure.
+        console.warn(`Could not save failure evidence for "${title}": ${error}`);
+    }
+}

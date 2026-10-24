@@ -8,6 +8,9 @@ import { androidCapabilities } from './capabilities.js';
 export const config: WebdriverIO.Config = {
     ...sharedConfig,
     logLevel: 'info',
+    // The CI emulator renders in software; give every implicit wait the same
+    // headroom that TIMEOUT_FACTOR gives the explicit ones.
+    waitforTimeout: 10_000 * Number(process.env.TIMEOUT_FACTOR ?? 1),
     capabilities: [
         androidCapabilities({
             'appium:androidInstallTimeout': 180_000,

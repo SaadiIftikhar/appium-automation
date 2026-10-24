@@ -9,8 +9,17 @@ updates:
     groups:
       test-stack:
         patterns: ["*"]
+    ignore:
+      # typescript-eslint pins a TypeScript range; a TypeScript major lands
+      # before the linter supports it and breaks `npm ci`. Move both together
+      # by hand.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]

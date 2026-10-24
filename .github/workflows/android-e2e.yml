@@ -25,6 +25,8 @@ concurrency:
 
 env:
   API_LEVEL: 34
+  # The emulator renders in software here, several times slower than a desktop.
+  TIMEOUT_FACTOR: 3
 
 jobs:
   static-checks:
@@ -80,7 +82,7 @@ jobs:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-          key: avd-${{ env.API_LEVEL }}-google_apis-x86_64-pixel_6
+          key: avd-${{ env.API_LEVEL }}-google_apis-x86_64-pixel_6-4g
 
       - name: Create AVD snapshot
         if: steps.avd-cache.outputs.cache-hit != 'true'
@@ -91,6 +93,8 @@ jobs:
           arch: x86_64
           profile: pixel_6
           force-avd-creation: false
+          ram-size: 4096M
+          cores: 4
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: false
           script: echo "Snapshot saved."
@@ -103,9 +107,11 @@ jobs:
           arch: x86_64
           profile: pixel_6
           force-avd-creation: false
+          ram-size: 4096M
+          cores: 4
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          script: npm run test:ci -- ${{ github.event.inputs.suite == 'smoke' && '--mochaOpts.grep @smoke' || '' }}
+          script: bash scripts/ci-test.sh ${{ (github.event_name == 'pull_request' || github.event.inputs.suite == 'smoke') && '--mochaOpts.grep @smoke' || '' }}
 
       - name: Build Allure report
         if: always()
