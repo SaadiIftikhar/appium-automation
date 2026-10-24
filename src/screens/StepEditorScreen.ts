@@ -1,3 +1,4 @@
+import Hints from '../components/Hints.js';
 import TimerPicker, { type TimerLength } from '../components/TimerPicker.js';
 import { staysDisplayed } from '../helpers/elements.js';
 import { hideKeyboard } from '../helpers/gestures.js';
@@ -17,8 +18,7 @@ class StepEditorScreen extends BaseScreen {
     }
 
     async dismissHints(): Promise<void> {
-        const hints = await $$(byId(TestIds.hintDismiss));
-        if (hints.length > 0) await hints[0].click();
+        await Hints.dismissAll();
     }
 
     async enterTitle(title: string): Promise<void> {

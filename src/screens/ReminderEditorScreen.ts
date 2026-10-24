@@ -1,3 +1,4 @@
+import Hints from '../components/Hints.js';
 import DayPickerDialog, { type RepeatPreset, type Weekday } from '../components/DayPickerDialog.js';
 import TimePickerDialog, { type ClockTime } from '../components/TimePickerDialog.js';
 import TimerPicker, { type TimerLength } from '../components/TimerPicker.js';
@@ -49,11 +50,7 @@ class ReminderEditorScreen extends BaseScreen {
      * button. They push the form down, so specs clear them first.
      */
     async dismissHints(): Promise<void> {
-        for (let i = 0; i < 2; i++) {
-            const hints = await $$(byId(TestIds.hintDismiss));
-            if (hints.length === 0) return;
-            await hints[0].click();
-        }
+        await Hints.dismissAll();
     }
 
     async enterTitle(title: string): Promise<void> {
