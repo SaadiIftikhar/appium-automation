@@ -1,0 +1,95 @@
+name: Android E2E
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Which tests to run
+        type: choice
+        options: [full, smoke]
+        default: full
+  schedule:
+    # Nightly, so a new app release is caught even when this repo is quiet.
+    - cron: "0 3 * * *"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+
+  e2e:
+    needs: static-checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level: [34]
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Enable KVM for the emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - run: npm ci
+
+      - name: Download the APK under test
+        # The x86_64 build runs natively on the x86_64 emulator, with no ARM
+        # translation layer in the way.
+        run: npm run app:download
+        env:
+          CADENCE_ASSET: Cadence-x86_64.apk
+
+      - name: Run tests on an emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: npm run test:ci -- ${{ github.event.inputs.suite == 'smoke' && '--mochaOpts.grep @smoke' || '' }}
+
+      - name: Build Allure report
+        if: always()
+        run: npx allure generate reports/allure-results --clean -o reports/allure-report
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-reports-api${{ matrix.api-level }}
+          path: |
+            reports/allure-report
+            reports/screenshots
+            reports/logs
+          retention-days: 14

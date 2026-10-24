@@ -1,0 +1,8 @@
+node_modules/
+apps/*.apk
+reports/
+*.log
+.env
+.DS_Store
+.vscode/
+.idea/
