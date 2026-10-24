@@ -1,6 +1,7 @@
 # Cadence: Appium E2E tests
 
 [![Android E2E](https://github.com/SaadiIftikhar/appium-automation/actions/workflows/android-e2e.yml/badge.svg)](https://github.com/SaadiIftikhar/appium-automation/actions/workflows/android-e2e.yml)
+[![Allure report](https://img.shields.io/badge/report-Allure-orange)](https://saadiiftikhar.github.io/appium-automation/)
 
 This repo holds end-to-end UI tests for **[Cadence](https://github.com/SaadiIftikhar/cadence)**, an Android
 reminder app built with Flutter, for routines that you work through one step at a time.
@@ -12,9 +13,9 @@ written in TypeScript on WebdriverIO, and runs on every push in GitHub Actions o
 |---|---|
 | **Stack** | Appium 3 · UiAutomator2 driver · WebdriverIO 10 · Mocha · TypeScript |
 | **Pattern** | Page Object Model, with screens, reusable components and multi-screen flows |
-| **Reporting** | Allure, plus a screenshot on every failure |
-| **CI** | GitHub Actions on an API 34 emulator, run on push, on PRs and nightly |
-| **Coverage** | 67 test cases across 10 feature areas. See the [test plan](docs/TEST_PLAN.md). |
+| **Reporting** | Allure, [published from every run on main](https://saadiiftikhar.github.io/appium-automation/). A failure saves a screenshot and the accessibility tree. |
+| **CI** | GitHub Actions on an API 34 emulator: the full suite on main and nightly, `@smoke` tests on pull requests |
+| **Coverage** | 11 spec files, 67 test cases. See the [test plan](docs/TEST_PLAN.md). |
 
 ## Why UiAutomator2 and not a Flutter driver?
 
