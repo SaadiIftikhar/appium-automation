@@ -1,7 +1,7 @@
 import DayPickerDialog, { type RepeatPreset, type Weekday } from '../components/DayPickerDialog.js';
 import TimePickerDialog, { type ClockTime } from '../components/TimePickerDialog.js';
 import TimerPicker, { type TimerLength } from '../components/TimerPicker.js';
-import { appears, attributeIsTrue, findScrolling, labelLine } from '../helpers/elements.js';
+import { appears, attributeIsTrue, findScrolling, labelLine, staysDisplayed } from '../helpers/elements.js';
 import { hideKeyboard } from '../helpers/gestures.js';
 import { byId, byIdAndLabel } from '../helpers/selectors.js';
 import { TestIds } from '../testIds.js';
@@ -35,9 +35,13 @@ class ReminderEditorScreen extends BaseScreen {
         await $(`~${title}`).waitForDisplayed({ timeoutMsg: `Editor "${title}" did not open` });
     }
 
-    /** Whether the editor is still open, e.g. after a rejected save. */
-    async isOpen(): Promise<boolean> {
-        return appears(this.trait, 2_000);
+    /**
+     * Whether the editor stays open for `ms`, as it should after a rejected
+     * save. Checking once is not enough: right after a save that went through,
+     * the editor is still on screen while its exit animation plays.
+     */
+    async staysOpen(ms = 2_000): Promise<boolean> {
+        return staysDisplayed(this.trait, ms);
     }
 
     /**

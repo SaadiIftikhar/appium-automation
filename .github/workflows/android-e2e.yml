@@ -15,9 +15,16 @@ on:
     # Nightly, so a new app release is caught even when this repo is quiet.
     - cron: "0 3 * * *"
 
+# Least privilege by default; the Pages job asks for what it needs.
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+env:
+  API_LEVEL: 34
 
 jobs:
   static-checks:
@@ -35,11 +42,7 @@ jobs:
   e2e:
     needs: static-checks
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      matrix:
-        api-level: [34]
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v5
 
@@ -68,15 +71,40 @@ jobs:
         env:
           CADENCE_ASSET: Cadence-x86_64.apk
 
-      - name: Run tests on an emulator
+      # A booted-and-saved AVD snapshot turns a cold boot of several minutes
+      # into a quick restore on every later run.
+      - name: Restore AVD snapshot
+        uses: actions/cache@v4
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-${{ env.API_LEVEL }}-google_apis-x86_64-pixel_6
+
+      - name: Create AVD snapshot
+        if: steps.avd-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: ${{ matrix.api-level }}
+          api-level: ${{ env.API_LEVEL }}
           target: google_apis
           arch: x86_64
           profile: pixel_6
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: false
+          script: echo "Snapshot saved."
+
+      - name: Run tests on the emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ env.API_LEVEL }}
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           script: npm run test:ci -- ${{ github.event.inputs.suite == 'smoke' && '--mochaOpts.grep @smoke' || '' }}
 
       - name: Build Allure report
@@ -87,9 +115,30 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: e2e-reports-api${{ matrix.api-level }}
+          name: e2e-reports
           path: |
             reports/allure-report
-            reports/screenshots
+            reports/failures
             reports/logs
           retention-days: 14
+
+      - name: Stage the report for GitHub Pages
+        if: always() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: reports/allure-report
+
+  # The latest report from main, browsable without downloading anything.
+  publish-report:
+    needs: e2e
+    if: always() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && needs.e2e.result != 'skipped' && needs.e2e.result != 'cancelled'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

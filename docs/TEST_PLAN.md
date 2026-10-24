@@ -28,13 +28,18 @@ persistence, the icon picker, the calendar, and the settings screen.
 - **Locators:** test ids the app sets with `Semantics(identifier: ...)`, which Android reports as
   `resource-id`, queried with UiSelector. Flutter's own time picker and dropdown menu items have
   no ids, so they are matched by accessibility label.
-- **Isolation:** before each test, app data is cleared with `mobile: clearApp` and the app is
-  relaunched. Every test starts at onboarding with an empty database, and tests can run alone
-  or in any order.
+- **Isolation:** a Mocha root hook (`test/hooks.ts`) runs before every other hook. It clears
+  app data with `mobile: clearApp`, re-grants the notification permission (which clearing
+  revokes), and relaunches the app. Every test starts at onboarding with an empty database,
+  and tests can run alone or in any order.
+- **Environment:** an Android 14 (API 34) emulator, the same locally (`npm run emulator:setup`)
+  and in CI.
 - **Test data:** builders in `src/data` give every reminder a unique name.
 - **Waits:** explicit waits only. A lint rule rejects `browser.pause`.
 - **Retries:** one Mocha retry per test, to absorb emulator hiccups. Allure flags tests that
   pass only on retry.
+- **Failure evidence:** each failed test saves a screenshot and the accessibility tree XML to
+  `reports/failures/`. CI uploads both with the Allure report.
 
 ## Test cases
 

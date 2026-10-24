@@ -6,59 +6,51 @@ import StepEditorScreen from '../../src/screens/StepEditorScreen.js';
 /**
  * The app blocks a save with missing fields by outlining them in red and
  * staying put. Colour is not in the accessibility tree, so these tests assert
- * the behaviour a user relies on: the editor stays open and nothing is saved.
+ * the behaviour a user relies on: the editor refuses to close, and once the
+ * user backs out, nothing was saved.
  */
 describe('Form validation', () => {
     beforeEach(async () => {
         await launchToHome();
     });
 
-    it('TC-VAL-01 a step with no title and no time is not saved', async () => {
+    async function expectSaveRejected(): Promise<void> {
+        await ReminderEditorScreen.save();
+        expect(await ReminderEditorScreen.staysOpen()).toBe(true);
+
+        await ReminderEditorScreen.goBack();
+        await HomeScreen.waitForDisplayed();
+        expect(await HomeScreen.isEmptyStateShown()).toBe(true);
+    }
+
+    async function openNewStep(): Promise<void> {
         await HomeScreen.startNewStep();
         await ReminderEditorScreen.waitForTitle('New step');
         await ReminderEditorScreen.dismissHints();
+    }
 
-        await ReminderEditorScreen.save();
-
-        expect(await ReminderEditorScreen.isOpen()).toBe(true);
-        expect(await HomeScreen.isDisplayed()).toBe(false);
+    it('TC-VAL-01 a step with no title and no time is not saved', async () => {
+        await openNewStep();
+        await expectSaveRejected();
     });
 
     it('TC-VAL-02 a step with a title but no time is not saved', async () => {
-        await HomeScreen.startNewStep();
-        await ReminderEditorScreen.waitForTitle('New step');
-        await ReminderEditorScreen.dismissHints();
+        await openNewStep();
         await ReminderEditorScreen.enterTitle('No time set');
-
-        await ReminderEditorScreen.save();
-
-        expect(await ReminderEditorScreen.isOpen()).toBe(true);
-        expect(await HomeScreen.isDisplayed()).toBe(false);
+        await expectSaveRejected();
     });
 
     it('TC-VAL-03 a step with a time but no title is not saved', async () => {
-        await HomeScreen.startNewStep();
-        await ReminderEditorScreen.waitForTitle('New step');
-        await ReminderEditorScreen.dismissHints();
+        await openNewStep();
         await ReminderEditorScreen.setTime();
-
-        await ReminderEditorScreen.save();
-
-        expect(await ReminderEditorScreen.isOpen()).toBe(true);
-        expect(await HomeScreen.isDisplayed()).toBe(false);
+        await expectSaveRejected();
     });
 
     it('TC-VAL-04 a title of only spaces counts as empty', async () => {
-        await HomeScreen.startNewStep();
-        await ReminderEditorScreen.waitForTitle('New step');
-        await ReminderEditorScreen.dismissHints();
+        await openNewStep();
         await ReminderEditorScreen.enterTitle('   ');
         await ReminderEditorScreen.setTime();
-
-        await ReminderEditorScreen.save();
-
-        expect(await ReminderEditorScreen.isOpen()).toBe(true);
-        expect(await HomeScreen.isDisplayed()).toBe(false);
+        await expectSaveRejected();
     });
 
     it('TC-VAL-05 a routine with no steps is not saved', async () => {
@@ -69,10 +61,7 @@ describe('Form validation', () => {
         await ReminderEditorScreen.setTime();
         expect(await ReminderEditorScreen.hasNoStepsMessage()).toBe(true);
 
-        await ReminderEditorScreen.save();
-
-        expect(await ReminderEditorScreen.isOpen()).toBe(true);
-        expect(await HomeScreen.isDisplayed()).toBe(false);
+        await expectSaveRejected();
     });
 
     it('TC-VAL-06 a routine step with no title is not saved', async () => {
@@ -84,7 +73,10 @@ describe('Form validation', () => {
         await StepEditorScreen.dismissHints();
 
         await StepEditorScreen.save();
+        expect(await StepEditorScreen.staysOpen()).toBe(true);
 
-        expect(await StepEditorScreen.isOpen()).toBe(true);
+        await StepEditorScreen.goBack();
+        await ReminderEditorScreen.waitForTitle('New routine');
+        expect(await ReminderEditorScreen.stepCount()).toBe(0);
     });
 });

@@ -1,9 +1,9 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import type { Options } from '@wdio/types';
 
-import { APP_PACKAGE } from '../src/constants.js';
-
 const ROOT = path.resolve(import.meta.dirname, '..');
+const FAILURES = path.join(ROOT, 'reports/failures');
 
 /**
  * Settings shared by every run target (local emulator, real device, CI).
@@ -29,13 +29,14 @@ export const sharedConfig: Omit<Options.Testrunner, 'capabilities'> = {
     connectionRetryTimeout: 180_000,
     connectionRetryCount: 2,
 
-    // Appium is started and stopped by the runner, using the copy in
-    // node_modules, so the Appium version is pinned by package-lock.json.
+    // Appium is started and stopped by the runner. With no `command` set, the
+    // service resolves the copy in node_modules, so the Appium version is
+    // pinned by package-lock.json. (Setting `command` makes the service spawn
+    // `appium --version` first, which crashes intermittently on Windows.)
     services: [
         [
             'appium',
             {
-                command: path.join(ROOT, 'node_modules/.bin/appium'),
                 args: {
                     relaxedSecurity: false,
                     log: path.join(ROOT, 'reports/logs/appium.log'),
@@ -51,6 +52,9 @@ export const sharedConfig: Omit<Options.Testrunner, 'capabilities'> = {
         // A failed UI test is retried once to separate real failures from
         // device hiccups. A test that only passes on retry is flagged in Allure.
         retries: 1,
+        // Every test starts from a fresh install: data cleared, permissions
+        // granted, app relaunched. See test/hooks.ts.
+        require: [path.join(ROOT, 'test/hooks.ts')],
     },
 
     reporters: [
@@ -66,19 +70,19 @@ export const sharedConfig: Omit<Options.Testrunner, 'capabilities'> = {
         ],
     ],
 
-    /**
-     * Every test starts from a fresh install state: data cleared, app relaunched.
-     * Tests never depend on what an earlier test left behind, so any one of them
-     * can run alone or in any order.
-     */
-    beforeTest: async () => {
-        await driver.execute('mobile: clearApp', { appId: APP_PACKAGE });
-        await driver.activateApp(APP_PACKAGE);
+    onPrepare: () => {
+        fs.mkdirSync(FAILURES, { recursive: true });
     },
 
+    /**
+     * A failed test leaves a screenshot (also attached to its Allure entry)
+     * and the accessibility tree as XML. The tree shows every id and label
+     * the device reported, which is usually what a failure comes down to.
+     */
     afterTest: async (test, _context, { passed }) => {
         if (passed) return;
-        const safeName = test.title.replace(/[^a-z0-9]+/gi, '_').slice(0, 80);
-        await driver.saveScreenshot(path.join(ROOT, `reports/screenshots/${safeName}.png`));
+        const base = path.join(FAILURES, test.title.replace(/[^a-z0-9]+/gi, '_').slice(0, 80));
+        await driver.saveScreenshot(`${base}.png`);
+        fs.writeFileSync(`${base}.xml`, await driver.getPageSource());
     },
 };

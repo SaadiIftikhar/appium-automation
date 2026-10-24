@@ -1,4 +1,4 @@
-import { APP_PACKAGE } from '../../src/constants.js';
+import { restartApp } from '../../src/helpers/app.js';
 import ActionMenu from '../../src/components/ActionMenu.js';
 import { aRoutine, aStep } from '../../src/data/reminders.js';
 import { createRoutine, createSingleStep, launchToHome } from '../../src/flows/reminders.flow.js';
@@ -95,8 +95,7 @@ describe('Manage reminders from the home list', () => {
         const routine = aRoutine();
         await createRoutine(routine);
 
-        await driver.terminateApp(APP_PACKAGE);
-        await driver.activateApp(APP_PACKAGE);
+        await restartApp();
 
         await HomeScreen.waitForLaunch();
         expect(await HomeScreen.hasReminder(routine.title)).toBe(true);

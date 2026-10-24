@@ -1,4 +1,4 @@
-import { APP_PACKAGE } from '../../src/constants.js';
+import { restartApp } from '../../src/helpers/app.js';
 import HomeScreen from '../../src/screens/HomeScreen.js';
 import OnboardingScreen, { ONBOARDING_PAGES } from '../../src/screens/OnboardingScreen.js';
 
@@ -60,8 +60,7 @@ describe('Onboarding', () => {
         await OnboardingScreen.skip();
         await HomeScreen.waitForDisplayed();
 
-        await driver.terminateApp(APP_PACKAGE);
-        await driver.activateApp(APP_PACKAGE);
+        await restartApp();
 
         await HomeScreen.waitForLaunch();
         expect(await OnboardingScreen.isDisplayed()).toBe(false);

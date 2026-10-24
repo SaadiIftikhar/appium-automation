@@ -8,6 +8,8 @@
     "node": ">=22.19"
   },
   "scripts": {
+    "emulator:setup": "node scripts/setup-emulator.mjs",
+    "emulator:start": "node scripts/start-emulator.mjs",
     "app:download": "node scripts/download-apk.mjs",
     "driver:install": "appium driver install uiautomator2",
     "doctor": "appium driver doctor uiautomator2",

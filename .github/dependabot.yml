@@ -1,0 +1,16 @@
+version: 2
+updates:
+  # Appium, its driver and WebdriverIO move quickly; keep them current in
+  # one weekly batch rather than a PR per package.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      test-stack:
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

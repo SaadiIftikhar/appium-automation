@@ -1,5 +1,5 @@
 import TimerPicker, { type TimerLength } from '../components/TimerPicker.js';
-import { appears } from '../helpers/elements.js';
+import { staysDisplayed } from '../helpers/elements.js';
 import { hideKeyboard } from '../helpers/gestures.js';
 import { byId } from '../helpers/selectors.js';
 import { TestIds } from '../testIds.js';
@@ -11,9 +11,9 @@ class StepEditorScreen extends BaseScreen {
         return $(byId(TestIds.stepEditorSave));
     }
 
-    /** Whether the editor is still open, e.g. after a rejected save. */
-    async isOpen(): Promise<boolean> {
-        return appears(this.trait, 2_000);
+    /** Whether the editor stays open for `ms`; see ReminderEditorScreen.staysOpen. */
+    async staysOpen(ms = 2_000): Promise<boolean> {
+        return staysDisplayed(this.trait, ms);
     }
 
     async dismissHints(): Promise<void> {

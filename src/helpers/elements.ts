@@ -42,3 +42,18 @@ export async function findScrolling(id: string, labelStart?: string): Promise<We
     if (await appears(direct, 1_500)) return direct.getElement();
     return $(scrollToId(id, labelStart)).getElement();
 }
+
+/**
+ * Whether the element stays on screen for the whole of `ms`, checked every
+ * 250 ms. For asserting that something does *not* go away, such as a form
+ * that should refuse to close.
+ */
+export async function staysDisplayed(element: Element, ms: number): Promise<boolean> {
+    const deadline = Date.now() + ms;
+    while (Date.now() < deadline) {
+        const el = await element;
+        if (!(await el.isDisplayed())) return false;
+        await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+    return true;
+}

@@ -71,16 +71,42 @@ docs/TEST_PLAN.md  Scope, approach and every test case
 
 ## Running locally
 
-**Prerequisites:** Node.js 22.19+, JDK 17, the Android SDK with `ANDROID_HOME` set, and one
-device visible in `adb devices`. The device can be an emulator or a phone with USB debugging on.
+**You need:** Node.js 22.19+, JDK 17, and the Android SDK command-line tools with
+`ANDROID_HOME` set. Android Studio installs both the SDK and the command-line tools.
+
+### 1. Install
 
 ```bash
-npm ci                  # installs Appium and the UiAutomator2 driver locally
-npm run app:download    # fetches the latest Cadence APK into apps/
-npm run doctor          # optional: checks the Android setup
-npm test                # full suite
-npm run test:smoke      # @smoke-tagged tests only
-npm run report          # opens the Allure report
+npm ci                   # Appium and the UiAutomator2 driver, pinned in package-lock.json
+```
+
+### 2. Get a device
+
+**Emulator.** These scripts work on Windows, macOS and Linux:
+
+```bash
+npm run emulator:setup   # one-time: installs an Android 14 image, creates AVD "cadence-e2e"
+npm run emulator:start   # boots it, waits for Android to finish starting, turns off animations
+```
+
+The emulator needs hardware acceleration:
+
+- **Windows:** turn on *Windows Hypervisor Platform* in Windows Features.
+- **Linux:** `/dev/kvm` must be accessible.
+- **macOS:** nothing extra is needed. On Apple Silicon the scripts pick an arm64 image.
+
+To run without a window, set `HEADLESS=1` before `npm run emulator:start`.
+
+**Phone.** Plug it in with USB debugging on, and check that it shows in `adb devices`.
+
+### 3. Run
+
+```bash
+npm run app:download     # fetches the Cadence build that matches the device's CPU
+npm test                 # full suite
+npm run test:smoke       # @smoke-tagged tests only
+npm run report           # opens the Allure report
+npm run doctor           # if a session fails to start: checks the Android setup
 ```
 
 Run a single file:
@@ -94,10 +120,11 @@ npx wdio run config/wdio.android.conf.ts --spec test/specs/run-routine.spec.ts
 | Variable | Default | Purpose |
 |---|---|---|
 | `APP_PATH` | `apps/cadence.apk` | Test a local build instead |
-| `CADENCE_ASSET` | `Cadence-arm64.apk` | Release asset for `app:download`. Use `Cadence-x86_64.apk` for an emulator. |
+| `CADENCE_VERSION` | `latest` | Release tag for `app:download` |
+| `CADENCE_ASSET` | matches the device | `Cadence-arm64.apk` or `Cadence-x86_64.apk` |
 | `ANDROID_UDID` | — | Pick a device when several are connected |
 | `ANDROID_PLATFORM_VERSION` | — | Pin the Android version |
-| `CADENCE_VERSION` | `latest` | Release tag for `app:download` |
+| `AVD_NAME` / `AVD_API_LEVEL` | `cadence-e2e` / `34` | Emulator the scripts create and start |
 
 ## Practices used
 

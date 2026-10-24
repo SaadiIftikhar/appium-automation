@@ -31,6 +31,10 @@ export const byId = (id: string): string => uiSelector(`.resourceId(${quote(id)}
 export const byIdAndLabel = (id: string, labelStart: string): string =>
     uiSelector(`.resourceId(${quote(id)}).descriptionStartsWith(${quote(labelStart)})`);
 
+/** One of several widgets sharing `id`, picked by its exact label. */
+export const byIdAndExactLabel = (id: string, label: string): string =>
+    uiSelector(`.resourceId(${quote(id)}).description(${quote(label)})`);
+
 /** Scrolls the screen's scrollable until the widget is in view. */
 export const scrollToId = (id: string, labelStart?: string): string =>
     'android=new UiScrollable(new UiSelector().scrollable(true))' +
