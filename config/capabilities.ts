@@ -40,7 +40,7 @@ export function androidCapabilities(extra: WebdriverIO.Capabilities = {}): Webdr
         'appium:autoGrantPermissions': true,
 
         // The APK is installed once per session; each test then clears app data
-        // (see beforeTest), which is far faster than reinstalling.
+        // (see test/hooks.ts), which is far faster than reinstalling.
         'appium:noReset': false,
         'appium:fullReset': false,
 

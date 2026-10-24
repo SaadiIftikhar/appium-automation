@@ -8,13 +8,6 @@ export interface TimerLength {
     seconds?: number;
 }
 
-/** "mm:ss", or "h:mm:ss" from an hour up: the format the app shows everywhere. */
-export function formatTimer({ hours = 0, minutes = 0, seconds = 0 }: TimerLength): string {
-    const mm = String(minutes).padStart(2, '0');
-    const ss = String(seconds).padStart(2, '0');
-    return hours > 0 ? `${hours}:${mm}:${ss}` : `${mm}:${ss}`;
-}
-
 const UNIT_IDS = {
     hours: TestIds.timerHours,
     minutes: TestIds.timerMinutes,

@@ -4,6 +4,7 @@
 set -u
 
 mkdir -p reports/logs
+node scripts/prepare-device.mjs
 adb logcat -c || true
 
 npm run test:ci -- "$@"

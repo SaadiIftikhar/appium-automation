@@ -33,11 +33,19 @@ persistence, the icon picker, the calendar, and the settings screen.
   revokes), and relaunches the app. Every test starts at onboarding with an empty database,
   and tests can run alone or in any order.
 - **Environment:** an Android 14 (API 34) emulator, the same locally (`npm run emulator:setup`)
-  and in CI.
+  and in CI. `scripts/prepare-device.mjs` turns off animations and Android's crash/ANR
+  dialogs. A freshly booted CI emulator's launcher often stops responding, and its dialog
+  covers the app and hides every element. The reset hook also taps **Wait** on any such
+  dialog that appears anyway.
 - **Test data:** builders in `src/data` give every reminder a unique name.
-- **Waits:** explicit waits only. A lint rule rejects `browser.pause`.
+- **Waits and assertions:** explicit waits only; a lint rule rejects `browser.pause`. Whether
+  something is shown or gone is asserted with WebdriverIO's retrying matchers
+  (`toBeDisplayed`, `not.toBeDisplayed`), which wait either way and fail with a clear message.
+- **Async safety:** type-aware ESLint rejects un-awaited promises, so a missing `await` on a
+  WebdriverIO command fails the lint, not a test run later.
 - **Retries:** one Mocha retry per test, to absorb emulator hiccups. Allure flags tests that
-  pass only on retry.
+  pass only on retry. In CI, a spec file whose session dies (for example, the on-device
+  UiAutomator2 server crashing) is re-run once in a fresh session.
 - **Failure evidence:** each failed test saves a screenshot and the accessibility tree XML to
   `reports/failures/`. CI uploads both with the Allure report.
 
@@ -79,6 +87,7 @@ persistence, the icon picker, the calendar, and the settings screen.
 | TC-STEP-06 | Editor reflects chosen time, repeat and timer |
 | TC-STEP-07 | Notification and alarm switches toggle |
 | TC-STEP-08 | Backing out discards the draft |
+| TC-STEP-09 | "No timer" takes a timer back off |
 
 ### Validation (`validation.spec.ts`)
 | ID | Case |
@@ -141,13 +150,14 @@ persistence, the icon picker, the calendar, and the settings screen.
 | TC-ICON-02 | No-match search says so |
 | TC-ICON-03 | Picking returns to the editor |
 | TC-ICON-04 | Back leaves without a change |
+| TC-ICON-05 | Clearing a search brings the suggestions back |
 
 ### Calendar (`calendar.spec.ts`)
 | ID | Case |
 |---|---|
 | TC-CAL-01 | Nothing scheduled with no repeating reminders |
 | TC-CAL-02 | Every-day reminder listed under today |
-| TC-CAL-03 | Weekend reminder appears only on weekend days |
+| TC-CAL-03 | Of a weekdays and a weekend reminder, only the one for today is listed |
 
 ### Settings (`settings.spec.ts`)
 | ID | Case |

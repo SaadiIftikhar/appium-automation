@@ -11,7 +11,7 @@ describe('Calendar', () => {
     it('TC-CAL-01 with no repeating reminders, today shows nothing scheduled', async () => {
         await BottomNav.open('Calendar');
         await CalendarScreen.waitForDisplayed();
-        expect(await CalendarScreen.isNothingScheduled()).toBe(true);
+        await expect(CalendarScreen.emptyState).toBeDisplayed();
     });
 
     it('TC-CAL-02 an every-day reminder is listed under today', async () => {
@@ -21,19 +21,28 @@ describe('Calendar', () => {
         await BottomNav.open('Calendar');
         await CalendarScreen.waitForDisplayed();
 
-        expect(await CalendarScreen.hasReminder(step.title)).toBe(true);
+        await expect(CalendarScreen.reminder(step.title)).toBeDisplayed();
+        await expect(CalendarScreen.emptyState).not.toBeDisplayed();
     });
 
-    it('TC-CAL-03 a reminder only appears on the weekdays it repeats', async () => {
-        // A weekend-only reminder, checked against today and against a day
-        // known to be the other kind, so the test holds on any date.
-        const step = aStep({ repeat: 'Weekend' });
-        await createSingleStep(step);
+    it('TC-CAL-03 a reminder is listed only on the days it repeats', async () => {
+        // One weekday reminder and one weekend reminder: whatever day the
+        // test runs on, exactly one of them belongs to today. So the test
+        // checks both that the right one is listed and that the other is not.
+        const weekdays = aStep({ title: `Weekdays ${Date.now() % 10_000}`, repeat: 'Weekdays' });
+        const weekend = aStep({ title: `Weekend ${Date.now() % 10_000}`, repeat: 'Weekend' });
+        await createSingleStep(weekdays);
+        await createSingleStep(weekend);
+
         await BottomNav.open('Calendar');
         await CalendarScreen.waitForDisplayed();
 
-        const today = new Date();
-        const isWeekend = today.getDay() === 0 || today.getDay() === 6;
-        expect(await CalendarScreen.hasReminder(step.title)).toBe(isWeekend);
+        // The emulator's clock follows the host's, so the host's weekday is
+        // the device's weekday.
+        const day = new Date().getDay();
+        const isWeekend = day === 0 || day === 6;
+        const [listed, notListed] = isWeekend ? [weekend, weekdays] : [weekdays, weekend];
+        await expect(CalendarScreen.reminder(listed.title)).toBeDisplayed();
+        await expect(CalendarScreen.reminder(notListed.title)).not.toBeDisplayed();
     });
 });

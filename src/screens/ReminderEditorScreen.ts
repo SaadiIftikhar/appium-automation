@@ -99,6 +99,10 @@ class ReminderEditorScreen extends BaseScreen {
         await TimerPicker.set(length);
     }
 
+    async clearTimer(): Promise<void> {
+        await TimerPicker.clear();
+    }
+
     async timerValue(): Promise<string> {
         return TimerPicker.summary();
     }

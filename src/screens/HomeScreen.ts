@@ -17,8 +17,9 @@ class HomeScreen extends BaseScreen {
         return this.waitForDisplayed(TIMEOUT.launch);
     }
 
-    async isEmptyStateShown(): Promise<boolean> {
-        return appears($(byId(TestIds.homeEmpty)));
+    /** "No reminders yet". For `toBeDisplayed()` / `not.toBeDisplayed()`, which wait either way. */
+    get emptyState() {
+        return $(byId(TestIds.homeEmpty));
     }
 
     /** A reminder card, matched by the title its label starts with. */

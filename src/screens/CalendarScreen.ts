@@ -1,4 +1,3 @@
-import { appears, labelOf } from '../helpers/elements.js';
 import { byId, byIdAndLabel } from '../helpers/selectors.js';
 import { TestIds } from '../testIds.js';
 import { BaseScreen } from './BaseScreen.js';
@@ -9,17 +8,14 @@ class CalendarScreen extends BaseScreen {
         return $(byId(TestIds.calendarSelectedDay));
     }
 
-    /** The heading over the day's list, e.g. "Sunday, 18 October". */
-    async selectedDay(): Promise<string> {
-        return labelOf(this.trait);
+    /** "Nothing scheduled", shown when no reminder repeats on the chosen day. */
+    get emptyState() {
+        return $(byId(TestIds.calendarEmpty));
     }
 
-    async isNothingScheduled(): Promise<boolean> {
-        return appears($(byId(TestIds.calendarEmpty)));
-    }
-
-    async hasReminder(title: string): Promise<boolean> {
-        return $(byIdAndLabel(TestIds.calendarReminder, title)).isExisting();
+    /** A reminder in the chosen day's list, matched by its title. */
+    reminder(title: string) {
+        return $(byIdAndLabel(TestIds.calendarReminder, title));
     }
 }
 

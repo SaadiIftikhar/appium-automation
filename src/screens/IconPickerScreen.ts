@@ -1,6 +1,5 @@
 import { hideKeyboard } from '../helpers/gestures.js';
 import { byId, byIdAndExactLabel } from '../helpers/selectors.js';
-import { appears } from '../helpers/elements.js';
 import { TestIds } from '../testIds.js';
 import { BaseScreen } from './BaseScreen.js';
 
@@ -48,8 +47,9 @@ class IconPickerScreen extends BaseScreen {
         return $$(byId(TestIds.iconCell)).length;
     }
 
-    async noResultsShown(): Promise<boolean> {
-        return appears($(byId(TestIds.iconEmpty)));
+    /** "No icons match that search." */
+    get emptyState() {
+        return $(byId(TestIds.iconEmpty));
     }
 }
 

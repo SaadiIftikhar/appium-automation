@@ -7,7 +7,17 @@ export default tseslint.config(
     ...tseslint.configs.recommended,
     {
         files: ['**/*.ts'],
+        // Type-aware rules: they need the compiler's view of each file.
+        languageOptions: {
+            parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname },
+        },
         rules: {
+            // Every WebdriverIO command is async. A missing `await` lets the
+            // test carry on before the command has run, which passes or fails
+            // by timing alone, so both of these are errors.
+            '@typescript-eslint/no-floating-promises': 'error',
+            '@typescript-eslint/no-misused-promises': 'error',
+            '@typescript-eslint/await-thenable': 'error',
             // Hard waits hide timing bugs; wait for a condition instead.
             'no-restricted-properties': [
                 'error',
@@ -22,7 +32,6 @@ export default tseslint.config(
                     message: 'Remove .only before committing.',
                 },
             ],
-            '@typescript-eslint/no-floating-promises': 'off',
         },
     },
     {

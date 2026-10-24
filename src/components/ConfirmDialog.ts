@@ -1,4 +1,3 @@
-import { labelOf } from '../helpers/elements.js';
 import { byId } from '../helpers/selectors.js';
 import { TestIds } from '../testIds.js';
 
@@ -13,12 +12,6 @@ class ConfirmDialog {
 
     async waitForDisplayed(): Promise<void> {
         await this.confirmButton.waitForDisplayed({ timeoutMsg: 'Confirmation dialog did not appear' });
-    }
-
-    /** The confirm button's wording, e.g. "Delete", "Mark done", "Reset". */
-    async confirmLabel(): Promise<string> {
-        await this.waitForDisplayed();
-        return labelOf(this.confirmButton);
     }
 
     async confirm(): Promise<void> {

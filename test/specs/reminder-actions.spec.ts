@@ -67,7 +67,7 @@ describe('Manage reminders from the home list', () => {
         await HomeScreen.deleteReminder(step.title, { confirm: true });
 
         await HomeScreen.waitForReminderGone(step.title);
-        expect(await HomeScreen.isEmptyStateShown()).toBe(true);
+        await expect(HomeScreen.emptyState).toBeDisplayed();
     });
 
     it('TC-ACT-06 cancelling delete keeps the reminder', async () => {

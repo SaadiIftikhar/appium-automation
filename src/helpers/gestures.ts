@@ -15,10 +15,14 @@ export async function longPress(element: Element, durationMs = 800): Promise<voi
     });
 }
 
-export async function swipe(element: Element, direction: 'left' | 'right' | 'up' | 'down', percent = 0.75): Promise<void> {
-    const el = await element;
+/** Swipes across the whole screen, away from the edges that trigger system gestures. */
+export async function swipeScreen(direction: 'left' | 'right' | 'up' | 'down', percent = 0.8): Promise<void> {
+    const { width, height } = await driver.getWindowSize();
     await driver.execute('mobile: swipeGesture', {
-        elementId: el.elementId,
+        left: Math.round(width * 0.1),
+        top: Math.round(height * 0.3),
+        width: Math.round(width * 0.8),
+        height: Math.round(height * 0.3),
         direction,
         percent,
     });

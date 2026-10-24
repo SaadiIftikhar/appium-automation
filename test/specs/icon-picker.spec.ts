@@ -20,7 +20,8 @@ describe('Icon picker', () => {
 
     it('TC-ICON-02 a search with no matches says so', async () => {
         await IconPickerScreen.search('zzqqxx');
-        expect(await IconPickerScreen.noResultsShown()).toBe(true);
+        await expect(IconPickerScreen.emptyState).toBeDisplayed();
+        expect(await IconPickerScreen.resultCount()).toBe(0);
     });
 
     it('TC-ICON-03 picking an icon returns to the editor', async () => {
@@ -32,5 +33,15 @@ describe('Icon picker', () => {
     it('TC-ICON-04 back leaves the picker without changing anything', async () => {
         await IconPickerScreen.goBack();
         await ReminderEditorScreen.waitForTitle('New step');
+    });
+
+    it('TC-ICON-05 clearing a search brings the suggestions back', async () => {
+        await IconPickerScreen.search('zzqqxx');
+        await expect(IconPickerScreen.emptyState).toBeDisplayed();
+
+        await IconPickerScreen.clearSearch();
+
+        await expect(IconPickerScreen.emptyState).not.toBeDisplayed();
+        expect(await IconPickerScreen.resultCount()).toBeGreaterThan(0);
     });
 });

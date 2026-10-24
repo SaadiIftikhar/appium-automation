@@ -9,10 +9,24 @@ const RUNTIME_PERMISSIONS = ['android.permission.POST_NOTIFICATIONS'];
 
 /** Puts the app back to a fresh install: no data, permissions granted, running. */
 export async function resetApp(): Promise<void> {
+    await dismissSystemErrorDialog();
     await driver.terminateApp(APP_PACKAGE);
     await driver.execute('mobile: clearApp', { appId: APP_PACKAGE });
     await grantPermissions();
     await driver.activateApp(APP_PACKAGE);
+    await dismissSystemErrorDialog();
+}
+
+/**
+ * Android's "<app> isn't responding" dialog, raised for some other app (on a
+ * freshly booted CI emulator, usually the launcher). It sits over Cadence and
+ * hides its whole accessibility tree, so every lookup fails. The emulator
+ * scripts turn these dialogs off with `hide_error_dialogs`; this catches one
+ * that appears anyway, on a device configured some other way.
+ */
+async function dismissSystemErrorDialog(): Promise<void> {
+    const wait = await $$('android=new UiSelector().resourceId("android:id/aerr_wait")');
+    if (wait.length > 0) await wait[0].click();
 }
 
 async function grantPermissions(): Promise<void> {

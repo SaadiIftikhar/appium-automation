@@ -7,6 +7,7 @@
 import { setTimeout as sleep } from 'node:timers/promises';
 
 import { AVD_NAME, capture, fail, startDetached, tool } from './android-sdk.mjs';
+import { prepareDevice } from './prepare-device.mjs';
 
 const adb = tool('platform-tools/adb');
 const emulator = tool('emulator/emulator');
@@ -22,6 +23,7 @@ function runningEmulators() {
 if (runningEmulators().length > 0) {
     console.log('An emulator is already running:');
     console.log(runningEmulators().join('\n'));
+    prepareDevice();
     process.exit(0);
 }
 
@@ -36,10 +38,7 @@ while (Date.now() < deadline) {
     await sleep(3_000);
     if (runningEmulators().length === 0) continue;
     if (capture(adb, ['shell', 'getprop', 'sys.boot_completed']).trim() === '1') {
-        // Animations make UI tests slower and flakier; turn them off.
-        for (const setting of ['window_animation_scale', 'transition_animation_scale', 'animator_duration_scale']) {
-            capture(adb, ['shell', 'settings', 'put', 'global', setting, '0']);
-        }
+        prepareDevice();
         console.log('Emulator is ready.');
         process.exit(0);
     }

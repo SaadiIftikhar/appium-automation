@@ -15,7 +15,7 @@ describe('Create a single-step reminder', () => {
 
         expect(await HomeScreen.hasReminder(step.title)).toBe(true);
         expect(await HomeScreen.reminderDetails(step.title)).toContain('8:00 AM');
-        expect(await HomeScreen.isEmptyStateShown()).toBe(false);
+        await expect(HomeScreen.emptyState).not.toBeDisplayed();
     });
 
     it('TC-STEP-02 a step with no repeat days is labelled "Today only"', async () => {
@@ -86,6 +86,18 @@ describe('Create a single-step reminder', () => {
         await ReminderEditorScreen.goBack();
 
         await HomeScreen.waitForDisplayed();
-        expect(await HomeScreen.isEmptyStateShown()).toBe(true);
+        await expect(HomeScreen.emptyState).toBeDisplayed();
+    });
+
+    it('TC-STEP-09 "No timer" takes a timer back off', async () => {
+        await HomeScreen.startNewStep();
+        await ReminderEditorScreen.waitForTitle('New step');
+        await ReminderEditorScreen.dismissHints();
+        await ReminderEditorScreen.setTimer({ minutes: 2 });
+        expect(await ReminderEditorScreen.timerValue()).toBe('02:00');
+
+        await ReminderEditorScreen.clearTimer();
+
+        expect(await ReminderEditorScreen.timerValue()).toBe('None');
     });
 });

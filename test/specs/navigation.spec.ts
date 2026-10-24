@@ -49,7 +49,7 @@ describe('Navigation', () => {
         await HomeScreen.openAddMenu();
         await pressBack();
         await HomeScreen.waitForDisplayed();
-        expect(await ActionMenu.has(TestIds.menuAddRoutine)).toBe(false);
+        await expect(ActionMenu.entry(TestIds.menuAddRoutine)).not.toBeDisplayed();
     });
 
     it('TC-NAV-06 each menu entry opens the matching editor', async () => {

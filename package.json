@@ -43,7 +43,9 @@
     "webdriverio": "^10.0.2"
   },
   "allowScripts": {
-    "esbuild@0.28.2": true,
-    "appium@3.8.0": true
+    "esbuild": true,
+    "appium": true,
+    "edgedriver": false,
+    "geckodriver": false
   }
 }

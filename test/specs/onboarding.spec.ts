@@ -40,7 +40,7 @@ describe('Onboarding', () => {
     it('TC-ONB-06 Skip lands on an empty home screen @smoke', async () => {
         await OnboardingScreen.skip();
         await HomeScreen.waitForDisplayed();
-        expect(await HomeScreen.isEmptyStateShown()).toBe(true);
+        await expect(HomeScreen.emptyState).toBeDisplayed();
     });
 
     it('TC-ONB-07 "Not now" on the last page finishes onboarding', async () => {

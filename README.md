@@ -15,7 +15,7 @@ written in TypeScript on WebdriverIO, and runs on every push in GitHub Actions o
 | **Pattern** | Page Object Model, with screens, reusable components and multi-screen flows |
 | **Reporting** | Allure, [published from every run on main](https://saadiiftikhar.github.io/appium-automation/). A failure saves a screenshot and the accessibility tree. |
 | **CI** | GitHub Actions on an API 34 emulator: the full suite on main and nightly, `@smoke` tests on pull requests |
-| **Coverage** | 11 spec files, 67 test cases. See the [test plan](docs/TEST_PLAN.md). |
+| **Coverage** | 11 spec files, 69 test cases. See the [test plan](docs/TEST_PLAN.md). |
 
 ## Why UiAutomator2 and not a Flutter driver?
 
@@ -136,6 +136,10 @@ npx wdio run config/wdio.android.conf.ts --spec test/specs/run-routine.spec.ts
 - **Fast, stable locators.** Test ids are queried with UiSelector, which runs on the device.
   No XPath.
 - **No fixed sleeps.** Every wait is for a condition, and ESLint rejects `browser.pause`.
+- **Retrying assertions.** Whether something is shown or gone is checked with WebdriverIO's
+  `toBeDisplayed()` / `not.toBeDisplayed()`, which wait for the condition instead of sampling once.
+- **No missing `await`s.** Type-aware ESLint fails on any un-awaited WebdriverIO command.
+- **Recoverable sessions.** In CI, a spec file whose session dies is re-run once in a fresh one.
 - **Gestures go through native `mobile:` commands.** UiAutomator2 runs them on the device,
   which is steadier on Flutter than pointer actions sent step by step.
 - **Tests assert behaviour, not pixels.** For example, validation tests check that an invalid

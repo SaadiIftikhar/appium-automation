@@ -20,7 +20,7 @@ describe('Form validation', () => {
 
         await ReminderEditorScreen.goBack();
         await HomeScreen.waitForDisplayed();
-        expect(await HomeScreen.isEmptyStateShown()).toBe(true);
+        await expect(HomeScreen.emptyState).toBeDisplayed();
     }
 
     async function openNewStep(): Promise<void> {

@@ -1,5 +1,6 @@
 import { TIMEOUT } from '../constants.js';
 import { labelOf } from '../helpers/elements.js';
+import { swipeScreen } from '../helpers/gestures.js';
 import { byId } from '../helpers/selectors.js';
 import { TestIds } from '../testIds.js';
 import { BaseScreen } from './BaseScreen.js';
@@ -72,15 +73,7 @@ class OnboardingScreen extends BaseScreen {
     }
 
     async swipeToNextPage(): Promise<void> {
-        const { width, height } = await driver.getWindowSize();
-        await driver.execute('mobile: swipeGesture', {
-            left: Math.round(width * 0.1),
-            top: Math.round(height * 0.3),
-            width: Math.round(width * 0.8),
-            height: Math.round(height * 0.3),
-            direction: 'left',
-            percent: 0.8,
-        });
+        await swipeScreen('left');
     }
 
     /** The quickest way past onboarding, for specs that are about something else. */
