@@ -35,11 +35,11 @@
     "@wdio/spec-reporter": "^10.1.0",
     "@wdio/types": "^10.0.1",
     "allure-commandline": "^2.46.1",
-    "appium": "^3.8.0",
-    "appium-uiautomator2-driver": "^8.7.0",
+    "appium": "^3.9.0",
+    "appium-uiautomator2-driver": "^8.7.3",
     "eslint": "^10.13.0",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.72.0",
+    "typescript-eslint": "^8.72.1",
     "webdriverio": "^10.0.2"
   },
   "allowScripts": {
