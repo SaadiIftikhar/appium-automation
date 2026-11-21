@@ -32,8 +32,8 @@ jobs:
   static-checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -68,9 +68,9 @@ jobs:
           - shard: 3
             specs: create-step run-step icon-picker onboarding calendar navigation
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -103,7 +103,7 @@ jobs:
       # A booted-and-saved AVD snapshot turns a cold boot of several minutes
       # into a quick restore on every later run.
       - name: Restore AVD snapshot
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         id: avd-cache
         with:
           path: |
@@ -145,7 +145,7 @@ jobs:
 
       - name: Upload Allure results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: allure-results-${{ matrix.shard }}
           path: reports/allure-results
@@ -153,7 +153,7 @@ jobs:
 
       - name: Upload failure evidence and logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: evidence-${{ matrix.shard }}
           path: |
@@ -169,14 +169,14 @@ jobs:
     outputs:
       staged: ${{ steps.stage.outcome == 'success' }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 17
@@ -184,7 +184,7 @@ jobs:
       - run: npm ci
 
       - name: Collect every shard's results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: allure-results-*
           path: reports/allure-results
@@ -194,7 +194,7 @@ jobs:
         run: npx allure generate reports/allure-results --clean -o reports/allure-report
 
       - name: Upload Allure report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: allure-report
           path: reports/allure-report
@@ -203,7 +203,7 @@ jobs:
       - name: Stage the report for GitHub Pages
         id: stage
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: reports/allure-report
 
@@ -220,4 +220,4 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - id: deploy
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
